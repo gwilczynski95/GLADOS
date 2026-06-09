@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mind the Gap: Geometrically Accurate Generative Reconstruction from Disjoint Views</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            color: #111;
+            line-height: 1.6;
+        }
+
+        .content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+
+        .full-width-header {
+            width: 100%;
+            background: linear-gradient(90deg, #12417e 0%, #1a73e8 100%);
+            background:
+                radial-gradient(900px circle at 18% 12%, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 60%),
+                linear-gradient(135deg, #12417e 0%, #235494 40%, #1a73e8 100%);
+            color: #ffffff;
+            padding: 40px 0 30px 0;
+            box-shadow: 0px 3px 14px rgba(0, 0, 0, 0.10);
+        }
+
+        .full-width-header h1,
+        .full-width-header h2 {
+            color: #ffffff;
+        }
+
+        .full-width-header .authors {
+            color: #ffffff;
+        }
+
+        .full-width-header .affils {
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .header-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+
+        h1 {
+            font-size: 40px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 28px;
+            margin-top: 40px;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 21px;
+            margin-top: 28px;
+            font-weight: 600;
+            color: #222;
+        }
+
+
+        .authors {
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .affils {
+            text-align: center;
+            font-size: 15px;
+            color: #555;
+        }
+
+        .equal {
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            margin-top: 5px;
+        }
+
+
+        .center {
+            text-align: center;
+        }
+
+        .btn-modern {
+            display: inline-block;
+            padding: 12px 26px;
+            margin: 10px;
+            font-size: 17px;
+            font-weight: 500;
+            color: #1a73e8;
+            background: #ffffff;
+            border-radius: 14px;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            transition: all 0.25s ease;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.18);
+            background: #f8faff;
+            color: #174ea6;
+        }
+
+
+        .teaser img {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .figure {
+            margin: 30px auto;
+            text-align: center;
+        }
+
+        .figure img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            background: #fafafa;
+        }
+
+        .figure .caption {
+            font-size: 15px;
+            color: #444;
+            text-align: justify;
+            margin-top: 10px;
+            line-height: 1.55;
+        }
+
+        .figure .caption b {
+            color: #111;
+        }
+
+
+        video {
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-placeholder {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(135deg, #eee 0%, #ddd 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 18px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+        }
+
+
+        .abstract {
+            text-align: justify;
+            font-size: 17px;
+            line-height: 1.7;
+            margin-top: 15px;
+        }
+
+
+        /* Quantitative table */
+        .results-table-wrapper {
+            overflow-x: auto;
+            margin-top: 18px;
+            border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            border: 1px solid #d2e3fc;
+        }
+
+        table.results {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 14px;
+            background: #ffffff;
+        }
+
+        table.results th,
+        table.results td {
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 1px solid #eef3fc;
+        }
+
+        table.results thead th {
+            background: #e8f0fe;
+            color: #174ea6;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            border-bottom: 2px solid #4285F4;
+        }
+
+        table.results tbody tr:nth-child(even) {
+            background: #f8faff;
+        }
+
+        table.results tbody tr:hover {
+            background: #e8f0fe;
+            transition: background 0.15s ease;
+        }
+
+        table.results td.method {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        table.results tr.ours {
+            background: #fef7e0;
+            font-weight: 600;
+            border-top: 2px solid #FBBC04;
+            border-bottom: 2px solid #FBBC04;
+        }
+
+        table.results tr.ours:hover {
+            background: #feefc3;
+        }
+
+        table.results tr.ours td.method::before {
+            content: "★ ";
+            color: #b06000;
+            font-size: 12px;
+        }
+
+        table.results .best {
+            color: #1e8e3e;
+            font-weight: 700;
+            text-decoration: underline;
+            text-decoration-color: #34A853;
+            text-underline-offset: 3px;
+            text-decoration-thickness: 2px;
+        }
+
+        table.results tr.ours .best {
+            color: #137333;
+        }
+
+        .table-caption {
+            font-size: 14px;
+            color: #555;
+            margin-top: 6px;
+            text-align: justify;
+        }
+
+
+        /* BibTeX */
+        .bibtex-block {
+            background: #1e1e1e;
+            color: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px 22px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.55;
+            overflow-x: auto;
+            white-space: pre;
+            margin-top: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+
+        /* Footer */
+        footer {
+            margin-top: 60px;
+            padding: 25px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            background: #fafafa;
+            border-top: 1px solid #eee;
+        }
+
+        footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #174ea6;
+            text-decoration: underline;
+        }
+    </style>
+
+
+</head>
+
+
+<body>
+
+
+    <div class="full-width-header">
+        <div class="header-inner">
+
+            <div style="text-align: center;">
+                <h1 style="margin-bottom: -8px;">Mind the Gap</h1>
+                <h2 style="margin-top: 12px;">Geometrically Accurate Generative Reconstruction from Disjoint Views</h2>
+            </div>
+
+
+
+
+            <div class="authors">
+                Grzegorz Wilczyński<sup>1, 3</sup> &nbsp;
+                Mikołaj Zieliński<sup>2</sup> &nbsp;
+                Bartosz Świrta<sup>3, 4</sup> &nbsp;
+                Dominik Belter<sup>2</sup> &nbsp;
+                Przemysław Spurek<sup>1, 3</sup> &nbsp;
+            </div>
+
+            <div class="affils">
+                <sup>1</sup>Jagiellonian University in Cracow&nbsp;•&nbsp;
+                <sup>2</sup>Poznań University of Technology &nbsp;•&nbsp;
+                <sup>3</sup>IDEAS Research Institute &nbsp;•&nbsp;
+                <sup>4</sup>Warsaw University of Technology
+            </div>
+
+            <div class="center" style="margin-top: 25px;">
+                <a class="btn-modern" href="https://arxiv.org/abs/2605.07550" target="_blank">arXiv</a>
+                <a class="btn-modern" href="https://github.com/gwilczynski95/GLADOS" target="_blank">Code</a>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+    <div class="content">
+
+
+        <!--
+            TEASER IMAGE
+            Use Figure 1 from the paper: "GLADOS Framework for Generative Reconstruction
+            from Disjoint Views" — the top-of-paper overview that shows
+            Generative Spatial Bridging → Robust Coarse Initialization →
+            High-Fidelity Generative Reconstruction.
+            Suggested file: images/teaser.jpg  (already present in the repo)
+        -->
+        <div class="teaser">
+            <img src="images/teaser.jpg" alt="GLADOS pipeline teaser (paper Figure 1)">
+            <p class="caption" style="font-size:15px;color:#444;text-align:justify;margin-top:10px;">
+                <b>GLADOS</b> solves 3D reconstruction across zero-overlap “spatial &amp; semantic gaps.”
+                <b>Generative Spatial Bridging</b> uses VLM reasoning to synthesize an intermediate transition frame,
+                establishing a continuous visual link between two otherwise disjoint inputs.
+                <b>Robust Coarse Initialization</b> builds an initial 3D scaffold from this augmented sequence, and
+                <b>High-Fidelity Generative Reconstruction</b> refines the geometry into a topologically coherent
+                3D model, enforcing the original observations as hard constraints while hallucinating plausible
+                unobserved regions.
+            </p>
+        </div>
+
+
+        <h2>Abstract</h2>
+        <div class="abstract">
+            3D vision systems are fundamentally constrained by their reliance on visual overlap: reconstruction methods
+            require it for geometric alignment, while generative models use it to enforce multi-view consistency. This
+            limitation is particularly acute in real-world scenarios such as distributed swarm robotics or
+            crowd-sourced data collection, where capturing overlapping perspectives, both in terms of spatial and
+            appearance overlap, is often impossible. We introduce <b>Generative Reconstruction from Disjoint Views</b>
+            as a new paradigm, establish a comprehensive dataset, and propose specialized evaluation metrics for
+            zero-overlap scenarios. Our benchmarking demonstrates that existing state-of-the-art methods fail
+            catastrophically on this task, producing disconnected geometries or semantically incoherent reconstructions.
+            To address these limitations, we propose <b>GLADOS</b>, a general, modular framework that operates through
+            three stages: (1) <b>Generative Bridging</b>, where foundation models synthesize intermediate perspectives
+            to connect disjoint inputs; (2) <b>Robust Coarse 3D Reconstruction</b>, that establishes a coarse geometric
+            scaffold via global alignment which absorbs local contradictions from the generative process; and (3)
+            <b>Iterative Context Expansion and Consistency Optimization</b> to fill missing regions and unify the
+            reconstruction. As an architecture-agnostic framework, GLADOS enables seamless integration of future
+            advances in generation, reconstruction, and inpainting.
+        </div>
+
+
+        <!--
+            VIDEO PLACEHOLDER
+            Replace the placeholder div below with a <video> tag pointing at the
+            final demo / explainer video once it is recorded.
+            Example:
+              <video width="100%" controls poster="images/teaser.jpg">
+                  <source src="videos/glados_overview.mp4" type="video/mp4">
+              </video>
+        -->
+        <h2>Video</h2>
+        <div class="center">
+            <div class="video-placeholder">
+                Video coming soon
+            </div>
+        </div>
+
+
+        <!--
+            METHOD / FRAMEWORK
+            Use Figure 2 from the paper: the three-stage GLADOS pipeline diagram
+            showing Generative Spatial Bridging, Robust Coarse 3D Reconstruction, and
+            Iterative Context Expansion & Consistency Optimization (with Anchored Grid
+            Inpainting and Super-Resolution loops).
+            Suggested file: images/figures/fig2_pipeline.png
+        -->
+        <h2>Method</h2>
+        <div class="figure">
+            <img src="images/method.png" alt="GLADOS three-stage pipeline (paper Figure 2)" style="width:60%;">
+            <p class="caption">
+                <b>The GLADOS pipeline consists of three main stages.</b>
+                First, <b>Generative Spatial Bridging</b> synthesizes a semantic anchor image to connect the
+                disjoint input views, producing the augmented triplet \(I_c\). Second, <b>Robust Coarse 3D
+                Reconstruction</b> aligns this augmented set to initialize a coarse 3D Gaussian Splatting scene
+                \(S_c\). Finally, <b>Iterative Context Expansion and Consistency Optimization</b> expand the scene
+                using an inpainting prior \(P_{inp}\) and a Latent Consistency Model \(P_{lcm}\), while our custom
+                <b>Anchored Grid Inpainting</b> \(P_{mgi}\) together with super-resolution \(P_{up}\) iteratively
+                eliminates residual holes to yield a metrically accurate, completed reconstruction \(S_{fin}\).
+            </p>
+        </div>
+
+
+        <h2>Results</h2>
+
+        <!--
+            QUALITATIVE COMPARISON: GLADOS vs baselines
+            Use Figure 4 from the paper: side-by-side reconstructions of GLADOS against
+            Dust3R, VGGT, AnySplat and VistaDream across novel-view timestamps t0..t199.
+            Suggested file: images/figures/fig4_comparison.png
+        -->
+        <h3>Reconstruction from two disjoint views</h3>
+        <div class="figure">
+            <img src="images/consistency.png" alt="Qualitative comparison vs baselines (paper Figure 4)"  style="width:60%;">
+            <p class="caption">
+                <b>Reconstruction consistency between GLADOS and other methods.</b>
+                Purely reconstruction-based methods (Dust3R, VGGT, AnySplat) fail to produce a consistent scene,
+                exhibiting major artifacts even for the observed regions (\(t_0\), \(t_{199}\)). VistaDream produces
+                less coherent results (left) or fails entirely in generating a probable scene (right). GLADOS
+                maintains structural fidelity in observed regions while plausibly hallucinating the unobserved
+                intermediate space.
+            </p>
+        </div>
+
+        <!--
+            QUANTITATIVE: TABLE 1 (main two-view benchmark)
+            The numbers below are reproduced from Table 1 of the paper.
+        -->
+        <div class="results-table-wrapper">
+            <table class="results">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>CLIP&nbsp;↑</th>
+                        <th>FID&nbsp;↓</th>
+                        <th>MEt3R&nbsp;↓</th>
+                        <th>GeCo<sub>M</sub>&nbsp;↓</th>
+                        <th>GeCo<sub>D</sub>&nbsp;↓</th>
+                        <th>GeCo<sub>F</sub>&nbsp;↓</th>
+                        <th>Photo&nbsp;↓</th>
+                        <th>Rec.&nbsp;Fail&nbsp;↓</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="method">AnySplat</td>
+                        <td>23.032</td><td>304.002</td><td>0.039</td><td>0.023</td>
+                        <td>0.503</td><td>0.313</td><td class="best">0.077</td><td>0</td>
+                    </tr>
+                    <tr>
+                        <td class="method">VGGT</td>
+                        <td>22.751</td><td>275.245</td><td>0.043</td><td>0.029</td>
+                        <td>0.109</td><td>0.075</td><td>0.132</td><td>0</td>
+                    </tr>
+                    <tr>
+                        <td class="method">Dust3r</td>
+                        <td>22.834</td><td>292.270</td><td>0.045</td><td>0.048</td>
+                        <td>0.147</td><td>0.101</td><td>0.179</td><td>3</td>
+                    </tr>
+                    <tr>
+                        <td class="method">VistaDream</td>
+                        <td>23.272</td><td class="best">226.189</td><td>0.037</td><td>0.049</td>
+                        <td>0.131</td><td>0.092</td><td>0.160</td><td>4</td>
+                    </tr>
+                    <tr class="ours">
+                        <td class="method">GLADOS (ours)</td>
+                        <td class="best">23.559</td><td>234.560</td><td class="best">0.032</td>
+                        <td class="best">0.012</td><td class="best">0.045</td><td class="best">0.032</td>
+                        <td>0.097</td><td class="best">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="table-caption">
+                <b>Table 1.</b> Quantitative comparison on the proposed disjoint-view benchmark using only two
+                non-overlapping input images. GLADOS achieves the best performance across most geometric metrics
+                (MEt3R, GeCo<sub>M</sub>, GeCo<sub>D</sub>, GeCo<sub>F</sub>) as well as the highest CLIP score, and
+                does not exhibit reconstruction failures on any scene.
+            </p>
+        </div>
+
+
+        <!--
+            FIGURE 3: VistaDream vs GLADOS detail comparison
+            Use Figure 3 from the paper: the close-up that shows residual geometric voids
+            (t=139) and textural blur (t=165) in VistaDream which GLADOS removes.
+            Suggested file: images/figures/fig3_vistadream_vs_glados.png
+        -->
+        <h3>Closing residual holes and textural blur</h3>
+        <div class="figure">
+            <img src="images/wrap_holes.jpg" alt="VistaDream vs GLADOS detail (paper Figure 3)" style="width:40%;">
+            <p class="caption">
+                Using the same input and midpoint images, <b>VistaDream</b> exhibits residual geometric voids
+                (\(t=139\)) and textural blur (\(t=165\)). <b>GLADOS</b> eliminates these artifacts via its
+                Anchored Grid Inpainting and super-resolution refinement loop, producing a high-fidelity, complete
+                3D scene.
+            </p>
+    
+        </div>
+
+
+        <!--
+            QUANTITATIVE: TABLE 2 (baselines + Generative Spatial Bridging)
+        -->
+        <h3>Effect of Generative Spatial Bridging on baselines</h3>
+        <div class="results-table-wrapper">
+            <table class="results">
+                <thead>
+                    <tr>
+                        <th>Method (+ Bridging)</th>
+                        <th>CLIP&nbsp;↑</th>
+                        <th>FID&nbsp;↓</th>
+                        <th>MEt3R&nbsp;↓</th>
+                        <th>GeCo<sub>M</sub>&nbsp;↓</th>
+                        <th>GeCo<sub>D</sub>&nbsp;↓</th>
+                        <th>GeCo<sub>F</sub>&nbsp;↓</th>
+                        <th>Photo&nbsp;↓</th>
+                        <th>Rec.&nbsp;Fail&nbsp;↓</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="method">AnySplat</td>
+                        <td class="best">23.572</td><td>283.045</td><td>0.046</td><td>0.030</td>
+                        <td>0.220</td><td>0.163</td><td>0.103</td><td>0</td>
+                    </tr>
+                    <tr>
+                        <td class="method">VGGT</td>
+                        <td>22.927</td><td>279.830</td><td>0.043</td><td>0.041</td>
+                        <td>0.085</td><td>0.065</td><td>0.148</td><td>0</td>
+                    </tr>
+                    <tr>
+                        <td class="method">Dust3r</td>
+                        <td>22.969</td><td>267.033</td><td>0.048</td><td>0.057</td>
+                        <td>0.215</td><td>0.141</td><td>0.173</td><td>0</td>
+                    </tr>
+                    <tr>
+                        <td class="method">VistaDream</td>
+                        <td>23.127</td><td class="best">206.169</td><td>0.034</td><td>0.048</td>
+                        <td>0.107</td><td>0.085</td><td>0.158</td><td>0</td>
+                    </tr>
+                    <tr class="ours">
+                        <td class="method">GLADOS (ours)</td>
+                        <td>23.559</td><td>234.560</td><td class="best">0.032</td>
+                        <td class="best">0.012</td><td class="best">0.045</td><td class="best">0.032</td>
+                        <td class="best">0.097</td><td>0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="table-caption">
+                <b>Table 2.</b> When all baselines are augmented with our Generative Spatial Bridging strategy,
+                Dust3r no longer collapses on hard scenes, yet improvements remain inconsistent. Across both
+                geometric and perceptual metrics, <b>GLADOS</b> consistently achieves the strongest overall performance.
+            </p>
+        </div>
+
+
+        <!--
+            ADDITIONAL QUALITATIVE RESULTS
+            Use Figures 6, 7, 8, 9 from the paper appendix.
+            - Figure 6: comparison on a scene with glass wall / monitor (semantic plausibility)
+            - Figure 7: library scene (self-captured) + RE10K scene 185
+            - Figure 8: RE10K scene 15 + scene 17
+            - Figure 9: RE10K scene 25 + scene 357
+            Suggested files:
+              images/figures/fig6_extra_comparison.png
+              images/figures/fig7_library_re10k185.png
+              images/figures/fig8_re10k_15_17.png
+              images/figures/fig9_re10k_25_357.png
+        -->
+
+        <!--
+            ABLATION
+            Use Figure 5 from the paper (qualitative ablation on Truck + RE10K scene 185)
+            together with Table 3 (quantitative ablation: w/o Midpoint, w/o ICE&CO,
+            w/o Refinement, full GLADOS).
+            Suggested file: images/figures/fig5_ablation.png
+        -->
+        <h3>Ablation study</h3>
+        <div class="figure">
+            <img src="images/ablation_qual2.png" alt="Qualitative ablation (paper Figure 5)"  style="width:60%;">
+            <p class="caption">
+                <b>Qualitative ablation.</b> The left four columns show views of the <i>Truck</i> scene from
+                Tanks &amp; Temples; the right four columns depict results for scene 185 from RealEstate10K.
+                Without Generative Spatial Bridging (<i>w/o Midpoint</i>) the system fails to register; bypassing
+                iterative expansion (<i>w/o ICE&amp;CO</i>) leads to geometric collapse on scenes with significant
+                translation; halting before refinement (<i>w/o Refinement</i>) leaves residual holes and missing
+                structural patches. The full pipeline resolves these artifacts.
+            </p>
+        </div>
+
+        <div class="results-table-wrapper">
+            <table class="results">
+                <thead>
+                    <tr>
+                        <th>Configuration</th>
+                        <th>CLIP&nbsp;↑</th>
+                        <th>FID&nbsp;↓</th>
+                        <th>MEt3R&nbsp;↓</th>
+                        <th>GeCo<sub>M</sub>&nbsp;↓</th>
+                        <th>GeCo<sub>D</sub>&nbsp;↓</th>
+                        <th>GeCo<sub>F</sub>&nbsp;↓</th>
+                        <th>Photo&nbsp;↓</th>
+                        <th>Rec.&nbsp;Fail&nbsp;↓</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="method">w/o Midpoint</td>
+                        <td>23.589</td><td>263.144</td><td class="best">0.031</td><td>0.046</td>
+                        <td>0.129</td><td>0.090</td><td>0.169</td><td>4</td>
+                    </tr>
+                    <tr>
+                        <td class="method">w/o ICE&amp;CO</td>
+                        <td class="best">23.770</td><td>310.579</td><td>0.041</td><td>0.054</td>
+                        <td>0.114</td><td>0.092</td><td>0.189</td><td>0</td>
+                    </tr>
+                    <tr>
+                        <td class="method">w/o Refinement</td>
+                        <td>23.127</td><td class="best">206.169</td><td>0.034</td><td>0.048</td>
+                        <td>0.107</td><td>0.085</td><td>0.158</td><td>0</td>
+                    </tr>
+                    <tr class="ours">
+                        <td class="method">GLADOS Full</td>
+                        <td>23.559</td><td>234.560</td><td>0.032</td>
+                        <td class="best">0.012</td><td class="best">0.045</td><td class="best">0.032</td>
+                        <td class="best">0.097</td><td class="best">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="table-caption">
+                <b>Table 3.</b> Ablation of GLADOS components. Bypassing spatial bridging (<i>w/o Midpoint</i>)
+                causes 4 reconstruction failures. Omitting iterative expansion and consistency optimization
+                (<i>w/o ICE&amp;CO</i>) severely degrades structural integrity. Halting before the final refinement
+                (<i>w/o Refinement</i>) worsens GeCo and MEt3R. The full method optimally balances robustness and
+                geometric fidelity.
+            </p>
+        </div>
+
+
+        <h2>BibTeX</h2>
+        <div class="bibtex-block">@article{wilczynski2026mindthegap,
+            title={Mind the Gap: Geometrically Accurate Generative Reconstruction from Disjoint Views}, 
+            author={Grzegorz Wilczynski and Mikołaj Zielinski and Bartosz Świrta and Dominik Belter and Przemysław Spurek},
+            year={2026},
+            eprint={2605.07550},
+            archivePrefix={arXiv},
+            primaryClass={cs.CV},
+            url={https://arxiv.org/abs/2605.07550}, 
+      }</div>
+
+
+    </div>
+
+
+    <footer>
+        Website template adapted from
+        <a href="https://wjakubowska.github.io/GaINeR/" target="_blank" rel="noopener">GaINeR</a>.
+    </footer>
+
+
+</body>
+
+</html>
